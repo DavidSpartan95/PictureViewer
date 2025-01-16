@@ -1,6 +1,5 @@
 package com.davidspartan.pictureviewer.view.screenA
 
-import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,6 +15,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,13 +24,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
+import com.davidspartan.pictureviewer.model.Realm.ImageData
 import com.davidspartan.pictureviewer.model.saveImageToInternalStorage
 import com.davidspartan.pictureviewer.view.ScreenB
+import com.davidspartan.pictureviewer.viewmodel.ImageViewModel
 
 @Composable
-fun ScreenA(navController: NavHostController) {
+fun ScreenA(
+    navController: NavHostController,
+) {
+
+    // Get the ImageViewModel instance
+    val imageViewModel: ImageViewModel = viewModel()
 
     val context = LocalContext.current
     var selectedImageUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
@@ -38,30 +46,48 @@ fun ScreenA(navController: NavHostController) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents(),
         onResult = { uris: List<Uri> ->
-            selectedImageUris = uris // Update the state with the selected image URIs
-            uris.forEach { saveImageToInternalStorage(context, it) }
+            val savedPaths = uris.mapNotNull { saveImageToInternalStorage(context, it) }
+            // Save paths to Realm
+            savedPaths.forEach { path ->
+                val imageData = ImageData().apply {
+                    name = path
+                }
+                imageViewModel.createImageList(imageData)
+            }
         }
     )
+
+    // Observe the state from ImageViewModel
+    val Images by imageViewModel.images.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Button(onClick = {
+            imageViewModel.deleteAllImages()
+        }) {
+            Text(
+                text = "DELETE ALL",
+            )
+        }
+
         Button(onClick = { launcher.launch("image/*") }) {
             Text(text = "Select Images")
         }
 
         // Display the selected images in a horizontal scrollable row
-        if (selectedImageUris.isNotEmpty()) {
+        if (Images.isNotEmpty()) {
+
             Row(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
                     .padding(top = 16.dp)
             ) {
-                selectedImageUris.forEach { uri ->
+                Images.forEach { uri ->
                     Image(
-                        painter = rememberAsyncImagePainter(model = uri),
+                        painter = rememberAsyncImagePainter(model = Uri.parse(uri.name)),
                         contentDescription = "Selected Image",
                         modifier = Modifier
                             .size(100.dp)
@@ -71,6 +97,7 @@ fun ScreenA(navController: NavHostController) {
             }
         }
 
+
         Button(onClick = {
             navController.navigate(ScreenB(name = "David", age = 21))
         }) {
@@ -78,6 +105,7 @@ fun ScreenA(navController: NavHostController) {
                 text = "Go to Screen B",
             )
         }
+
     }
 }
 

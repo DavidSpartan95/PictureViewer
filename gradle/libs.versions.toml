@@ -11,8 +11,7 @@ composeBom = "2024.04.01"
 composeNavigation = "2.8.5"
 roomKtx = "2.6.1"
 serialization = "1.6.3"
-com-android-application = "8.1.4"
-org-jetbrains-kotlin-android = "2.0.0"
+
 
 
 [libraries]

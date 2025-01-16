@@ -9,11 +9,14 @@ import com.davidspartan.pictureviewer.view.screenA.ScreenA
 import com.davidspartan.pictureviewer.view.screenB.ScreenB
 import kotlinx.serialization.Serializable
 
+
 @Composable
 fun MyNavHost (navController: NavHostController) {
     NavHost(navController, startDestination = ScreenA) {
         composable<ScreenA> {
-            ScreenA(navController)
+            ScreenA(
+                navController
+            )
         }
         composable<ScreenB> {
             val args = it.toRoute<ScreenB>()

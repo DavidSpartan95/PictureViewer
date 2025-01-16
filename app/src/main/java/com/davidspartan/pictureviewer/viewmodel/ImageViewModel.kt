@@ -2,50 +2,47 @@ package com.davidspartan.pictureviewer.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.davidspartan.pictureviewer.model.room.ImageDao
-import com.davidspartan.pictureviewer.model.room.ImageEvent
-import com.davidspartan.pictureviewer.model.room.ImageState
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.davidspartan.pictureviewer.model.Realm.ImageData
+import com.davidspartan.pictureviewer.model.Realm.MyApp
+import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.ext.query
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ImageViewModel(
-    private val dao: ImageDao
-): ViewModel()  {
+class ImageViewModel: ViewModel() {
 
-    private val _images = dao.getAllImages()
-    private val _state = MutableStateFlow(ImageState())
-    val state = combine(_state, _images) { state, images ->
-        state.copy(
-            images = images
+    private val realm = MyApp.realm
+
+    val images = realm
+        .query<ImageData>()
+        .asFlow()
+        .map { results ->
+            results.list.toList()
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            emptyList()
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ImageState())
 
-    fun onEvent(event: ImageEvent) {
-        when(event){
-            is ImageEvent.DeleteImage -> {
-                viewModelScope.launch {
-                    dao.deleteImage(event.image)
-                }
+    fun createImageList(Image: ImageData){
+
+        viewModelScope.launch {
+            realm.write {
+                    copyToRealm(Image, updatePolicy = UpdatePolicy.ALL)
             }
-            ImageEvent.SaveImage -> {
-                val image = _state.value.image
-                viewModelScope.launch {
-                    dao.insertImage(image)
-                }
-            }
-            is ImageEvent.SetFave -> {
-                _state.update {
-                    it.copy(
-                        favorite = event.favorite
-                    )
-                }
-            }
-            ImageEvent.ShowDialog -> TODO()
-            ImageEvent.HideDialog -> TODO()
         }
     }
-
+    fun deleteAllImages() {
+        viewModelScope.launch {
+            realm.write {
+                // Delete all ImageData objects
+                val allImages = query<ImageData>().find()
+                delete(allImages)
+            }
+        }
+    }
 }
+

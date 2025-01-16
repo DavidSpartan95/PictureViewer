@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.org.jetbrains.kotlin.kapt)
+    id("io.realm.kotlin")
 }
 
 android {
@@ -42,10 +43,10 @@ android {
 }
 
 dependencies {
+    implementation("io.realm.kotlin:library-base:2.0.0")
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation ("io.coil-kt:coil-compose:2.5.0")
-    implementation(libs.androidx.room.ktx)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
