@@ -7,7 +7,6 @@ Welcome to the **Picture SlideShow App**! This app allows users to seamlessly br
 - **Gallery Integration**: Select images directly from your phone's gallery and upload them into the app.
 - **Local Storage**: The app securely stores your selected images for future access, using Realm for efficient data management.
 - **Slideshow Mode**: Automatically display images in a slideshow format with a smooth transition between them.
-- **Customizable Display**: View images in a full-screen slideshow with adjustable settings for transitions and timing.
 
 ## Technologies Used
 
